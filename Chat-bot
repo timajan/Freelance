@@ -1,0 +1,52 @@
+from typing import Tuple, Union
+
+from util import user_data, bot
+import util
+from telebot import apihelper
+from telebot.types import Message, CallbackQuery
+
+import config as config
+from scenario import PATHS
+
+import markups
+
+# другие части бота нужны для полноценной работы бота
+import commands
+
+
+def delete_message(chat_id: int, message_id: int):
+    try:
+        bot.delete_message(chat_id=chat_id,
+                           message_id=message_id)
+    except apihelper.ApiTelegramException:
+        ...
+
+
+def get_info_from_message(message: Union[Message, CallbackQuery]) -> Tuple[int, str, int]:
+    """
+        Метод для получения данных с сообщения будь-то колбека или обычного
+    :param message:
+    :return:
+    """
+    if isinstance(message, Message):
+        if message.content_type == 'photo':
+            user_data['voice'] = message.message_id
+            return message.from_user.id, message.caption, message.message_id
+        elif message.content_type == 'contact':
+            return message.from_user.id, message.contact.phone_number, message.message_id
+        elif message.content_type == 'voice':
+            user_data['voice'] = message.message_id
+            return message.from_user.id, '', message.message_id
+        else:
+            return message.from_user.id, message.text, message.message_id
+    else:
+        return message.from_user.id, message.data, message.message.message_id
+        
+        
+@bot.message_handler(func=lambda message: message.text in config.COMMAND_START)
+def start_message(message: Message):
+    user_data['stage'], user_data['history'], user_data['voice'] = 1, '', 0
+    bot.send_message(chat_id=message.from_user.id,
+                     text='Привет! Я лучший помощник в вопросах недвижимости. Я помогаю недвижимости двигаться из рук в руки!\n'
+                          'Определите интересующие вас фильтры, а я предоставлю каталог интересующих вас апартаментов или помощь!',
+                     reply_markup=markups.generate_keyboard(1, False))
