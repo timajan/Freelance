@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import random
+import asyncio
 
 url = 'https://rieltor.ua/firms/'
 
@@ -23,10 +24,10 @@ selected = random.choice(proxy_list)
 proxies = {protocol: selected for protocol in ('http', 'https')}
 
 
-def get_data(url):
+async def get_data(url):
     req = requests.get(url, proxies=proxies)
     with open('project.html', 'w') as file:
         file.write(req.text)
 
+asyncio.run(get_data('https://rieltor.ua/firms/'))
 
-get_data('https://rieltor.ua/firms/')
